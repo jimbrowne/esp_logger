@@ -1,16 +1,16 @@
 #include "logger.h"
 
 namespace logging {
-Logger::Logger() : _serial(&Serial), _level(LoggerLevel::LOGGER_LEVEL_DEBUG), _isSyslogSet(false) {
+Logger::Logger() : _serial(&Serial), _level(LoggerLevel::LOGGER_LEVEL_DEBUG), _isSyslogSet(false), _memSize(0) {
 }
 
-Logger::Logger(LoggerLevel level) : _serial(&Serial), _level(level), _isSyslogSet(false) {
+Logger::Logger(LoggerLevel level) : _serial(&Serial), _level(level), _isSyslogSet(false), _memSize(0) {
 }
 
-Logger::Logger(Stream *serial) : _serial(serial), _level(LoggerLevel::LOGGER_LEVEL_DEBUG), _isSyslogSet(false) {
+Logger::Logger(Stream *serial) : _serial(serial), _level(LoggerLevel::LOGGER_LEVEL_DEBUG), _isSyslogSet(false), _memSize(0) {
 }
 
-Logger::Logger(Stream *serial, LoggerLevel level) : _serial(serial), _level(level), _isSyslogSet(false) {
+Logger::Logger(Stream *serial, LoggerLevel level) : _serial(serial), _level(level), _isSyslogSet(false), _memSize(0) {
 }
 
 Logger::~Logger() {
@@ -73,6 +73,9 @@ void Logger::println(LoggerLevel level, const String &module, const String &text
   if (_isSyslogSet) {
     syslogLog(level, module, text);
   }
+  if (_memSize > 0) {
+    memoryLog(level, module, text);
+  }
 }
 
 void Logger::printHeader(LoggerLevel level, const String &module) {
@@ -107,4 +110,22 @@ void Logger::syslogLog(LoggerLevel level, const String &module, const String &te
   _syslogUdp.print(text);
   _syslogUdp.endPacket();
 }
+
+void Logger::setMemory(unsigned int size) {
+  _memSize = size;
+}
+
+std::list<std::shared_ptr<String>> Logger::getMemory(void) {
+  return _memMessages;
+}
+
+void Logger::memoryLog(LoggerLevel level, const String &module, const String &text) {
+  std::shared_ptr<String> message = std::shared_ptr<String>(new String("[" + level.toString() + "][" + module + "]" + text));
+   if (_memMessages.size() == _memSize) {
+    _memMessages.pop_front();
+  } else {
+    _memMessages.push_back(message);
+  }
+}
+
 } // namespace logging

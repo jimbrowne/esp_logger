@@ -1,6 +1,10 @@
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 
+#include <list>
+#include <map>
+#include <memory>
+
 #include <Arduino.h>
 #include <WiFiUdp.h>
 
@@ -18,6 +22,10 @@ public:
 
   void setSerial(Stream *serial);
   void setDebugLevel(LoggerLevel level);
+
+  // memory logging
+  void setMemory(unsigned int size);
+  std::list<std::shared_ptr<String>> getMemory();
 
   // syslog config
   void setSyslogServer(const String &server, unsigned int port, const String &hostname);
@@ -42,6 +50,12 @@ private:
   String    _syslogHostname;
 
   void syslogLog(LoggerLevel level, const String &module, const String &text);
+
+  // memory members
+  unsigned int _memSize;
+  std::list<std::shared_ptr<String>> _memMessages;
+
+  void memoryLog(LoggerLevel level, const String &module, const String &text);
 };
 } // namespace logging
 
